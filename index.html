@@ -1,0 +1,58 @@
+<!doctype html>
+<!--
+  Eski adres (furkanduran217.github.io/turkce-wordle-app) bu sayfayı verir; CI her yayında
+  buraya kopyalar. Ziyaretçiyi fdgames.studio/dahiyane'ye gönderir:
+  - linkin # kısmı (meydan okuma m=…, uygulama=yok) aynen taşınır,
+  - bu adreste kalan oyun kayıtları (tw-*) #aktar= ile götürülür, yeni adres birleştirir
+    (src/game/transfer.ts). # kısmı sunucuya gitmez.
+-->
+<html lang="tr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>Dahiyane taşındı</title>
+    <link rel="canonical" href="https://fdgames.studio/dahiyane/" />
+    <style>
+      body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 16px; box-sizing: border-box; font-family: system-ui, sans-serif; text-align: center; background: #f3ede0; color: #2b2620; }
+      a { color: #3f7a3a; }
+    </style>
+  </head>
+  <body>
+    <p>Dahiyane yeni adresine taşındı: <a id="git" href="https://fdgames.studio/dahiyane/">fdgames.studio/dahiyane</a></p>
+    <script>
+      const TARGET = 'https://fdgames.studio/dahiyane/'
+
+      async function pack(text) {
+        let bytes = new TextEncoder().encode(text)
+        let tag = 'j'
+        if (typeof CompressionStream === 'function') {
+          bytes = new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer())
+          tag = 'z'
+        }
+        let binary = ''
+        for (const b of bytes) binary += String.fromCharCode(b)
+        return tag + btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+      }
+
+      ;(async () => {
+        const params = new URLSearchParams(location.hash.slice(1))
+        try {
+          const data = {}
+          for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i)
+            // Kelime anlamı önbelleği yeniden indirilebilir, linki şişirmesin.
+            if (key.startsWith('tw-') && key !== 'tw-meanings') data[key] = localStorage.getItem(key)
+          }
+          if (Object.keys(data).length) params.set('aktar', await pack(JSON.stringify(data)))
+        } catch {
+          // depo okunamadı: kayıtsız da olsa yeni adrese git
+        }
+        const hash = params.toString()
+        const url = TARGET + (hash ? '#' + hash : '')
+        document.getElementById('git').href = url
+        location.replace(url)
+      })()
+    </script>
+  </body>
+</html>
